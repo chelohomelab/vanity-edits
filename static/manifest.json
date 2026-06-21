@@ -1,0 +1,30 @@
+{
+  "name": "The Vanity Edit",
+  "short_name": "Vanity Edit",
+  "description": "Your Beauty Collection",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf5f7",
+  "theme_color": "#d4b896",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/logo.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% set cat_labels = {'makeup': 'Makeup', 'perfume': 'Perfumes', 'nail_polish': 'Nail Polish'} %}
+{% set cat_label = cat_labels.get(category, category) %}
+
+{% block title %}{{ cat_label }} – The Vanity Edit{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <h1 class="font-display text-2xl md:text-3xl text-vanity-800">{{ cat_label }}</h1>
+    <p class="text-gray-400 text-sm">{{ items|length }} item{{ 's' if items|length != 1 }}</p>
+  </div>
+  <!-- Status filters (right) -->
+  <div class="flex gap-1.5">
+    <button onclick="filterStatus('all')" class="status-filter active px-2.5 py-1 rounded-full text-[11px] font-medium transition" data-status="all">All</button>
+    <button onclick="filterStatus('new')" class="status-filter px-2.5 py-1 rounded-full text-[11px] font-medium transition" data-status="new">New</button>
+    <button onclick="filterStatus('open')" class="status-filter px-2.5 py-1 rounded-full text-[11px] font-medium transition" data-status="open">Open</button>
+    <button onclick="filterStatus('finished')" class="status-filter px-2.5 py-1 rounded-full text-[11px] font-medium transition" data-status="finished">Finished</button>
+  </div>
+</div>
+
+{% if category == 'makeup' %}
+<div class="flex flex-wrap gap-2 mb-4">
+  <button onclick="filterType('all')" class="type-filter active px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="all">All</button>
+  <button onclick="filterType('lips')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="lips">Lips</button>
+  <button onclick="filterType('eyes')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="eyes">Eyes</button>
+  <button onclick="filterType('face')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="face">Face</button>
+</div>
+{% elif category == 'nail_polish' %}
+<div class="flex flex-wrap gap-2 mb-4">
+  <button onclick="filterType('all')" class="type-filter active px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="all">All</button>
+  <button onclick="filterType('nudes')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="nudes">Nudes</button>
+  <button onclick="filterType('pinks')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="pinks">Pinks</button>
+  <button onclick="filterType('reds')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="reds">Reds</button>
+  <button onclick="filterType('sheers')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="sheers">Sheers</button>
+  <button onclick="filterType('other')" class="type-filter px-3 py-1.5 rounded-full text-xs font-medium transition" data-type="other">Other</button>
+</div>
+{% endif %}
+
+<!-- Search -->
+<div class="mb-6">
+  <input type="text" id="search-input" placeholder="Search by brand or name..."
+    oninput="searchItems()"
+    class="w-full sm:max-w-sm border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white/80"/>
+</div>
+
+<!-- Item Grid -->
+<div id="items-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-8">
+  {% for item in items %}
+  <a href="/item/{{ item.id }}"
+     class="item-card glass rounded-xl overflow-hidden card-hover border border-white/60 block"
+     data-status="{{ item.status }}"
+     data-brand="{{ (item.brand or '')|lower }}"
+     data-name="{{ (item.name or '')|lower }}"
+     data-ptype="{{ (item.product_type or '')|lower }}"
+     data-colorfamily="{{ (item.color_family or '')|lower }}"
+     data-finish="{{ (item.finish or '')|lower }}">
+    <div class="aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden relative">
+      {% if item.image_path_1 %}
+      <img src="/{{ item.image_path_1 }}" alt="{{ item.brand }}" class="w-full h-full object-cover"/>
+      {% else %}
+      <span class="text-vanity-200">
+        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+      </span>
+      {% endif %}
+      <span class="absolute top-1.5 right-1.5 badge-{{ item.status }} text-[10px] px-2 py-0.5 rounded-full font-medium">{{ item.status|capitalize }}</span>
+    </div>
+    <div class="p-2.5">
+      <p class="text-sm font-medium text-gray-800 truncate">{{ item.brand or 'Unknown' }}</p>
+      <p class="text-xs text-gray-400 truncate">{{ item.name or item.shade or '' }}</p>
+      {% if category == 'makeup' and item.product_type %}
+      <p class="text-[10px] text-vanity-400 mt-0.5">{{ item.product_type }}</p>
+      {% elif category == 'perfume' and item.concentration %}
+      <p class="text-[10px] text-vanity-400 mt-0.5">{{ item.concentration }}</p>
+      {% elif category == 'nail_polish' and item.color_family %}
+      <p class="text-[10px] text-vanity-400 mt-0.5">{{ item.color_family }}</p>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+{% if not items %}
+<div class="text-center py-16">
+  <p class="text-gray-400 mb-4">No {{ cat_label|lower }} in your collection yet</p>
+</div>
+{% endif %}
+
+<!-- Add Button (FAB) -->
+<button onclick="openAddModal()"
+  class="fixed z-40 shadow-lg hover:shadow-xl transition-all"
+  style="background: linear-gradient(135deg, #e05a7e, #ab2a50); bottom: 5.5rem; right: 1.5rem; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+</button>
+
+<!-- Autocomplete datalists -->
+<datalist id="dl-brand"></datalist>
+<datalist id="dl-name"></datalist>
+<datalist id="dl-shade"></datalist>
+
+<!-- Add Item Modal -->
+<div id="add-modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAddModal()"></div>
+  <div class="absolute inset-x-4 top-8 bottom-8 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
+      <h2 class="font-display text-lg text-vanity-800">Add {{ cat_label }}</h2>
+      <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="add-form" class="p-5 space-y-4" enctype="multipart/form-data">
+      <input type="hidden" name="category" value="{{ category }}"/>
+
+      <!-- Photo -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Photo</label>
+        <div class="flex gap-2">
+          <label class="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-4 cursor-pointer hover:border-vanity-300 transition">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+            <span class="text-sm text-gray-400">Choose Photo</span>
+            <input type="file" name="image" accept="image/*" class="hidden" onchange="previewImage(this)"/>
+          </label>
+          <label class="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl px-4 cursor-pointer hover:border-vanity-300 transition">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+            <input type="file" name="image" accept="image/*" capture="environment" class="hidden" onchange="previewImage(this)"/>
+          </label>
+        </div>
+        <div id="image-preview" class="mt-2 hidden">
+          <img id="preview-img" class="w-20 h-20 object-cover rounded-xl"/>
+        </div>
+      </div>
+
+      <!-- Brand & Name with autocomplete -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Brand *</label>
+        <input type="text" name="brand" required id="add-brand" list="dl-brand" autocomplete="off"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Product Name</label>
+        <input type="text" name="name" id="add-name" list="dl-name" autocomplete="off"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+
+      <!-- Category-Specific Fields -->
+      {% if category == 'makeup' %}
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Type</label>
+          <select name="product_type" id="add-product_type" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for t in makeup_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Finish</label>
+          <select name="finish" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for f in makeup_finishes %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Shade / Color</label>
+        <input type="text" name="shade" id="add-shade" list="dl-shade" autocomplete="off"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+
+      {% elif category == 'perfume' %}
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Concentration</label>
+          <select name="concentration" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for c in perfume_concentrations %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Size (ml)</label>
+          <input type="number" name="volume_ml" step="0.1" id="add-volume_ml"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Scent Type</label>
+        <select name="scent_type" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+          <option value="">Select...</option>
+          {% for s in scent_types %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+
+      {% elif category == 'nail_polish' %}
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Type</label>
+          <select name="polish_type" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for t in polish_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Finish</label>
+          <select name="finish" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for f in polish_finishes %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Shade / Color</label>
+          <input type="text" name="shade" id="add-shade" list="dl-shade" autocomplete="off"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Color Family</label>
+          <select name="color_family" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+            <option value="">Select...</option>
+            {% for c in color_families %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Status -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Status</label>
+        <select name="status" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 bg-white">
+          <option value="new">New</option>
+          <option value="open">Open</option>
+          <option value="finished">Finished</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Notes</label>
+        <textarea name="notes" rows="2"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 resize-none"></textarea>
+      </div>
+
+      <button type="submit"
+        class="w-full py-3 rounded-xl text-white font-medium transition shadow-md hover:shadow-lg text-sm"
+        style="background: linear-gradient(135deg, #e05a7e, #ab2a50);">
+        Add to Collection
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CATEGORY = '{{ category }}';
+
+// Load autocomplete suggestions
+async function loadAutocomplete() {
+  for (const field of ['brand', 'name', 'shade']) {
+    try {
+      const values = await apiFetch(`/items/autocomplete?field=${field}&category=${CATEGORY}`);
+      const dl = document.getElementById(`dl-${field}`);
+      dl.innerHTML = values.map(v => `<option value="${v}">`).join('');
+    } catch (e) {}
+  }
+}
+loadAutocomplete();
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('image-preview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(input.files[0]);
+    const form = document.getElementById('add-form');
+    const inputs = form.querySelectorAll('input[name="image"]');
+    inputs.forEach(inp => { if (inp !== input) inp.value = ''; });
+  }
+}
+
+let activeStatus = 'all';
+let activeType = 'all';
+
+const MAKEUP_GROUPS = {
+  lips: ['lipstick','lip gloss','lip liner'],
+  eyes: ['eyeshadow','eyeliner','mascara','brow'],
+  face: ['foundation','concealer','powder','blush','bronzer','highlighter','contour','primer','setting spray','setting powder'],
+};
+
+const NAIL_GROUPS = {
+  nudes: ['nude','brown'],
+  pinks: ['pink','coral'],
+  reds:  ['red','berry'],
+  sheers: ['_sheer_finish_'],
+};
+
+function applyFilters() {
+  document.querySelectorAll('.item-card').forEach(card => {
+    const statusOk = activeStatus === 'all' || card.dataset.status === activeStatus;
+    let typeOk = true;
+    if (activeType !== 'all') {
+      if (CATEGORY === 'makeup') {
+        const pt = (card.dataset.ptype || '');
+        typeOk = (MAKEUP_GROUPS[activeType] || []).includes(pt);
+      } else if (CATEGORY === 'nail_polish') {
+        const cf = card.dataset.colorfamily || '';
+        const fn = card.dataset.finish || '';
+        if (activeType === 'sheers') {
+          typeOk = fn === 'sheer';
+        } else if (activeType === 'other') {
+          const known = [...NAIL_GROUPS.nudes, ...NAIL_GROUPS.pinks, ...NAIL_GROUPS.reds];
+          typeOk = !known.includes(cf) && fn !== 'sheer';
+        } else {
+          typeOk = (NAIL_GROUPS[activeType] || []).includes(cf);
+        }
+      }
+    }
+    card.style.display = (statusOk && typeOk) ? '' : 'none';
+  });
+}
+
+function filterStatus(status) {
+  activeStatus = status;
+  document.querySelectorAll('.status-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+  applyFilters();
+}
+
+function filterType(type) {
+  activeType = type;
+  document.querySelectorAll('.type-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === type);
+  });
+  applyFilters();
+}
+
+function searchItems() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  document.querySelectorAll('.item-card').forEach(card => {
+    const brand = card.dataset.brand || '';
+    const name = card.dataset.name || '';
+    card.style.display = (brand.includes(q) || name.includes(q)) ? '' : 'none';
+  });
+}
+
+document.getElementById('add-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const images = form.querySelectorAll('input[name="image"]');
+  let hasImage = false;
+  images.forEach(inp => {
+    if (inp.files && inp.files.length > 0 && !hasImage) { hasImage = true; }
+  });
+  if (!hasImage) fd.delete('image');
+  try {
+    const r = await fetch('/items/', {method:'POST', body:fd, credentials:'same-origin'});
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({detail:'Failed'}));
+      throw new Error(err.detail);
+    }
+    window.location.reload();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+});
+</script>
+<style>
+  .status-filter, .type-filter { background: rgba(255,255,255,0.6); color: #9ca3af; border: 1px solid #e5e7eb; }
+  .status-filter.active { background: #e05a7e; color: white; border-color: #e05a7e; }
+  .type-filter.active { background: #8e2545; color: white; border-color: #8e2545; }
+  .status-filter:hover:not(.active), .type-filter:hover:not(.active) { background: rgba(255,255,255,0.9); }
+</style>
+{% endblock %}

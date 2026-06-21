@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Trash – The Vanity Edit{% endblock %}
+
+{% block content %}
+<h1 class="font-display text-2xl text-vanity-800 mb-6">Trash</h1>
+
+<div id="trash-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-3xl">
+  <!-- Loaded via JS -->
+</div>
+
+<div id="trash-empty" class="text-center py-16 hidden">
+  <p class="text-gray-400">Trash is empty</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadTrash() {
+  const data = await apiFetch('/admin/trash-items');
+  const list = document.getElementById('trash-list');
+  const empty = document.getElementById('trash-empty');
+  if (!data.items.length) { empty.classList.remove('hidden'); list.classList.add('hidden'); return; }
+  list.innerHTML = data.items.map(i => `
+    <div class="glass rounded-xl overflow-hidden border border-white/60" id="trash-${i.id}">
+      <div class="aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden">
+        ${i.image ? `<img src="/${i.image}" class="w-full h-full object-cover"/>` :
+          '<span class="text-vanity-200 text-3xl"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159"/></svg></span>'}
+      </div>
+      <div class="p-2.5">
+        <p class="text-sm font-medium text-gray-800 truncate">${i.label}</p>
+        <p class="text-[10px] text-gray-400 capitalize">${i.category.replace('_',' ')}</p>
+        <div class="flex gap-2 mt-2">
+          <button onclick="restoreItem(${i.id})" class="flex-1 text-xs py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition">Restore</button>
+          <button onclick="deleteForever(${i.id})" class="flex-1 text-xs py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function restoreItem(id) {
+  try {
+    await apiFetch(`/items/${id}/restore/`, {method:'POST'});
+    document.getElementById(`trash-${id}`).remove();
+    showToast('Restored');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function deleteForever(id) {
+  if (!confirm('Permanently delete this item?')) return;
+  try {
+    await apiFetch(`/admin/trash/items/${id}`, {method:'DELETE'});
+    document.getElementById(`trash-${id}`).remove();
+    showToast('Deleted permanently');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+loadTrash();
+</script>
+{% endblock %}

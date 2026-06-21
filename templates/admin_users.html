@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Users – The Vanity Edit{% endblock %}
+
+{% block content %}
+<h1 class="font-display text-2xl text-vanity-800 mb-6">Manage Users</h1>
+
+<!-- Add User -->
+<div class="glass rounded-2xl border border-white/60 p-5 mb-6 max-w-xl">
+  <h2 class="font-display text-lg text-vanity-700 mb-4">Add User</h2>
+  <form id="add-user-form" class="space-y-3">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Username</label>
+        <input type="text" name="username" required
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Email</label>
+        <input type="email" name="email"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Password</label>
+        <input type="password" name="password" required minlength="8"
+          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300"/>
+      </div>
+      <div class="flex items-end gap-3">
+        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer pb-2">
+          <input type="checkbox" name="is_admin" value="1" class="rounded accent-pink-500"/>
+          Admin
+        </label>
+        <button type="submit"
+          class="px-4 py-2 rounded-xl text-white text-sm font-medium transition mb-0.5"
+          style="background: linear-gradient(135deg, #e05a7e, #ab2a50);">
+          Add
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- User List -->
+<div class="glass rounded-2xl border border-white/60 overflow-hidden max-w-xl">
+  <table class="w-full text-sm">
+    <thead class="bg-vanity-50/50">
+      <tr>
+        <th class="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
+        <th class="text-center px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Admin</th>
+        <th class="text-center px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Active</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for u in users %}
+      <tr id="user-row-{{ u.id }}">
+        <td class="px-4 py-3">
+          <span class="font-medium text-gray-800">{{ u.username }}</span>
+          {% if u.email %}<span class="text-gray-400 text-xs ml-1">{{ u.email }}</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-center">
+          <button onclick="toggleUser({{ u.id }}, 'is_admin', {{ 'true' if u.is_admin else 'false' }})"
+            class="text-sm {{ 'text-vanity-600' if u.is_admin else 'text-gray-300' }} hover:text-vanity-800 transition">
+            {{ 'Yes' if u.is_admin else 'No' }}
+          </button>
+        </td>
+        <td class="px-4 py-3 text-center">
+          <button onclick="toggleUser({{ u.id }}, 'is_active', {{ 'true' if u.is_active else 'false' }})"
+            class="text-sm {{ 'text-green-600' if u.is_active else 'text-red-400' }} hover:text-green-800 transition">
+            {{ 'Yes' if u.is_active else 'No' }}
+          </button>
+        </td>
+        <td class="px-4 py-3 text-right">
+          {% if u.id != user.id %}
+          <button onclick="deleteUser({{ u.id }})" class="text-red-400 hover:text-red-600 text-xs transition">Delete</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('add-user-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const r = await fetch('/admin/users/', {method:'POST', body:fd, credentials:'same-origin'});
+    if (!r.ok) { const err = await r.json(); throw new Error(err.detail); }
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+});
+
+async function toggleUser(id, field, current) {
+  try {
+    await apiFetch(`/admin/users/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({[field]: !current})
+    });
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Delete this user?')) return;
+  try {
+    await apiFetch(`/admin/users/${id}`, {method:'DELETE'});
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+</script>
+{% endblock %}

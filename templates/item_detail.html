@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% set cat_labels = {'makeup': 'Makeup', 'perfume': 'Perfumes', 'nail_polish': 'Nail Polish'} %}
+{% set cat_label = cat_labels.get(item.category, item.category) %}
+
+{% block title %}{{ item.brand }} {{ item.name or '' }} – The Vanity Edit{% endblock %}
+
+{% block content %}
+<!-- Autocomplete datalists -->
+<datalist id="dl-brand"></datalist>
+<datalist id="dl-name"></datalist>
+<datalist id="dl-shade"></datalist>
+
+<!-- Back link -->
+<a href="/collection/{{ item.category }}" class="inline-flex items-center gap-1 text-vanity-600 text-sm mb-4 hover:text-vanity-800 transition">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  Back to {{ cat_label }}
+</a>
+
+<div class="glass rounded-2xl border border-white/60 overflow-hidden max-w-3xl mx-auto">
+  <!-- Photos Section -->
+  <div class="grid grid-cols-2 gap-0.5 bg-gray-100">
+    <!-- Photo 1 -->
+    <div class="relative aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden">
+      {% if item.image_path_1 %}
+      <img src="/{{ item.image_path_1 }}" alt="Photo 1" class="w-full h-full object-cover"/>
+      {% else %}
+      <span class="text-vanity-200">
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+      </span>
+      {% endif %}
+      <!-- Always-visible photo buttons -->
+      <div class="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+        <label class="p-2 bg-white/80 backdrop-blur rounded-full cursor-pointer hover:bg-white shadow transition">
+          <svg class="w-4 h-4 text-vanity-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto(this, 1)"/>
+        </label>
+        <label class="p-2 bg-white/80 backdrop-blur rounded-full cursor-pointer hover:bg-white shadow transition">
+          <svg class="w-4 h-4 text-vanity-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+          <input type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhoto(this, 1)"/>
+        </label>
+      </div>
+    </div>
+
+    <!-- Photo 2 -->
+    <div class="relative aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden">
+      {% if item.image_path_2 %}
+      <img src="/{{ item.image_path_2 }}" alt="Photo 2" class="w-full h-full object-cover"/>
+      {% else %}
+      <span class="text-vanity-200">
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+      </span>
+      {% endif %}
+      <div class="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+        <label class="p-2 bg-white/80 backdrop-blur rounded-full cursor-pointer hover:bg-white shadow transition">
+          <svg class="w-4 h-4 text-vanity-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto(this, 2)"/>
+        </label>
+        <label class="p-2 bg-white/80 backdrop-blur rounded-full cursor-pointer hover:bg-white shadow transition">
+          <svg class="w-4 h-4 text-vanity-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+          <input type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhoto(this, 2)"/>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  {% if item.image_path_1 and item.image_path_2 %}
+  <div class="text-center py-1 bg-gray-50">
+    <button onclick="swapPhotos()" class="text-xs text-vanity-500 hover:text-vanity-700 transition">Swap Photos</button>
+  </div>
+  {% endif %}
+
+  <!-- Details -->
+  <div class="p-5 space-y-4">
+    <!-- Header with edit hint -->
+    <div class="flex items-center justify-between">
+      <h2 class="font-display text-lg text-vanity-800">Details</h2>
+      <span class="text-[11px] text-gray-400 italic">tap any field to edit</span>
+    </div>
+
+    <!-- Status Toggle -->
+    <div class="flex gap-2">
+      <button onclick="setStatus('new')" class="status-btn flex-1 py-2 rounded-xl text-sm font-medium transition {{ 'bg-green-100 text-green-700 ring-2 ring-green-400' if item.status == 'new' else 'bg-gray-100 text-gray-400 hover:bg-gray-200' }}">New</button>
+      <button onclick="setStatus('open')" class="status-btn flex-1 py-2 rounded-xl text-sm font-medium transition {{ 'bg-blue-100 text-blue-700 ring-2 ring-blue-400' if item.status == 'open' else 'bg-gray-100 text-gray-400 hover:bg-gray-200' }}">Open</button>
+      <button onclick="setStatus('finished')" class="status-btn flex-1 py-2 rounded-xl text-sm font-medium transition {{ 'bg-gray-200 text-gray-600 ring-2 ring-gray-400' if item.status == 'finished' else 'bg-gray-100 text-gray-400 hover:bg-gray-200' }}">Finished</button>
+    </div>
+
+    <!-- Editable Fields -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="col-span-2 sm:col-span-1">
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Brand</label>
+        <input type="text" value="{{ item.brand or '' }}" data-field="brand" list="dl-brand" autocomplete="off"
+          class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white"/>
+      </div>
+      <div class="col-span-2 sm:col-span-1">
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Name</label>
+        <input type="text" value="{{ item.name or '' }}" data-field="name" list="dl-name" autocomplete="off"
+          class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white"/>
+      </div>
+    </div>
+
+    {% if item.category == 'makeup' %}
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Type</label>
+        <select data-field="product_type" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for t in makeup_types %}<option value="{{ t }}" {{ 'selected' if item.product_type == t }}>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Finish</label>
+        <select data-field="finish" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for f in makeup_finishes %}<option value="{{ f }}" {{ 'selected' if item.finish == f }}>{{ f }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Shade / Color</label>
+      <input type="text" value="{{ item.shade or '' }}" data-field="shade" list="dl-shade" autocomplete="off"
+        class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white"/>
+    </div>
+
+    {% elif item.category == 'perfume' %}
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Concentration</label>
+        <select data-field="concentration" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for c in perfume_concentrations %}<option value="{{ c }}" {{ 'selected' if item.concentration == c }}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Size (ml)</label>
+        <input type="number" value="{{ item.volume_ml or '' }}" data-field="volume_ml" step="0.1"
+          class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white"/>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Scent Type</label>
+      <select data-field="scent_type" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+        <option value="">—</option>
+        {% for s in scent_types %}<option value="{{ s }}" {{ 'selected' if item.scent_type == s }}>{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+
+    {% elif item.category == 'nail_polish' %}
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Type</label>
+        <select data-field="polish_type" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for t in polish_types %}<option value="{{ t }}" {{ 'selected' if item.polish_type == t }}>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Finish</label>
+        <select data-field="finish" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for f in polish_finishes %}<option value="{{ f }}" {{ 'selected' if item.finish == f }}>{{ f }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Shade / Color</label>
+        <input type="text" value="{{ item.shade or '' }}" data-field="shade" list="dl-shade" autocomplete="off"
+          class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white"/>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Color Family</label>
+        <select data-field="color_family" class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:bg-white">
+          <option value="">—</option>
+          {% for c in color_families %}<option value="{{ c }}" {{ 'selected' if item.color_family == c }}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% endif %}
+
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wider">Notes</label>
+      <textarea data-field="notes" rows="2"
+        class="edit-field w-full border border-transparent bg-vanity-50/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vanity-300 focus:border-vanity-300 focus:bg-white resize-none">{{ item.notes or '' }}</textarea>
+    </div>
+
+    {% if item.date_added %}
+    <p class="text-xs text-gray-400">Added {{ item.date_added }}</p>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="pt-2 border-t border-gray-100 flex justify-end">
+      <button onclick="trashItem()" class="text-sm text-red-400 hover:text-red-600 transition px-3 py-1.5 rounded-lg hover:bg-red-50">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ITEM_ID = {{ item.id }};
+const CATEGORY = '{{ item.category }}';
+
+async function loadAutocomplete() {
+  for (const field of ['brand', 'name', 'shade']) {
+    try {
+      const values = await apiFetch(`/items/autocomplete?field=${field}&category=${CATEGORY}`);
+      const dl = document.getElementById(`dl-${field}`);
+      dl.innerHTML = values.map(v => `<option value="${v}">`).join('');
+    } catch (e) {}
+  }
+}
+loadAutocomplete();
+
+document.querySelectorAll('.edit-field').forEach(el => {
+  const event = el.tagName === 'SELECT' ? 'change' : 'blur';
+  el.addEventListener(event, async () => {
+    const field = el.dataset.field;
+    let value = el.value.trim();
+    if (el.type === 'number') value = value ? parseFloat(value) : null;
+    if (value === '') value = null;
+    try {
+      await apiFetch(`/items/${ITEM_ID}`, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({[field]: value})
+      });
+      showToast('Saved');
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  });
+});
+
+async function setStatus(status) {
+  const fd = new FormData();
+  fd.append('status', status);
+  try {
+    await fetch(`/items/${ITEM_ID}/status/`, {method:'POST', body:fd, credentials:'same-origin'});
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function uploadPhoto(input, slot) {
+  if (!input.files[0]) return;
+  const fd = new FormData();
+  fd.append('image', input.files[0]);
+  fd.append('slot', slot);
+  try {
+    await fetch(`/items/${ITEM_ID}/update-photo/`, {method:'POST', body:fd, credentials:'same-origin'});
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function swapPhotos() {
+  try {
+    await apiFetch(`/items/${ITEM_ID}/swap-photos/`, {method:'POST'});
+    location.reload();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function trashItem() {
+  if (!confirm('Move this item to trash?')) return;
+  try {
+    await apiFetch(`/items/${ITEM_ID}/trash/`, {method:'POST'});
+    window.location.href = '/collection/{{ item.category }}';
+  } catch (e) { showToast(e.message, 'error'); }
+}
+</script>
+{% endblock %}

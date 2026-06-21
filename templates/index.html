@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}The Vanity Edit{% endblock %}
+
+{% block content %}
+<!-- Welcome -->
+<div class="text-center mb-8 mt-2">
+  <h1 class="font-display text-3xl md:text-4xl text-vanity-800 mb-1">My Collection</h1>
+  <p class="text-gray-400 text-sm">{{ total }} item{{ 's' if total != 1 }} total</p>
+</div>
+
+<!-- Category Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 max-w-2xl mx-auto">
+  <!-- Makeup -->
+  <a href="/collection/makeup" class="glass rounded-2xl p-6 text-center card-hover border border-white/60 block">
+    <div class="text-4xl mb-3">
+      <svg class="w-10 h-10 mx-auto text-vanity-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
+    </div>
+    <h2 class="font-display text-xl text-vanity-800 mb-1">Makeup</h2>
+    <p class="text-2xl font-light text-gray-600">{{ counts.makeup }}</p>
+  </a>
+
+  <!-- Perfumes -->
+  <a href="/collection/perfume" class="glass rounded-2xl p-6 text-center card-hover border border-white/60 block">
+    <div class="text-4xl mb-3">
+      <svg class="w-10 h-10 mx-auto text-vanity-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5a2.25 2.25 0 010 3.182l-2.06 2.06a2.25 2.25 0 01-3.182 0L12 17.984l-1.758 1.758a2.25 2.25 0 01-3.182 0L5 17.682a2.25 2.25 0 010-3.182"/></svg>
+    </div>
+    <h2 class="font-display text-xl text-vanity-800 mb-1">Perfumes</h2>
+    <p class="text-2xl font-light text-gray-600">{{ counts.perfume }}</p>
+  </a>
+
+  <!-- Nail Polish -->
+  <a href="/collection/nail_polish" class="glass rounded-2xl p-6 text-center card-hover border border-white/60 block">
+    <div class="text-4xl mb-3">
+      <svg class="w-10 h-10 mx-auto text-vanity-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+    </div>
+    <h2 class="font-display text-xl text-vanity-800 mb-1">Nail Polish</h2>
+    <p class="text-2xl font-light text-gray-600">{{ counts.nail_polish }}</p>
+  </a>
+</div>
+
+<!-- Recent Additions -->
+{% if recent %}
+<div class="max-w-4xl mx-auto">
+  <h2 class="font-display text-xl text-vanity-800 mb-4">Recently Added</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+    {% for item in recent %}
+    <a href="/item/{{ item.id }}" class="glass rounded-xl overflow-hidden card-hover border border-white/60 block">
+      <div class="aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden">
+        {% if item.image_path_1 %}
+        <img src="/{{ item.image_path_1 }}" alt="{{ item.brand }}" class="w-full h-full object-cover"/>
+        {% else %}
+        <span class="text-vanity-200 text-3xl">
+          {% if item.category == 'makeup' %}
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128z"/></svg>
+          {% elif item.category == 'perfume' %}
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5"/></svg>
+          {% else %}
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846"/></svg>
+          {% endif %}
+        </span>
+        {% endif %}
+      </div>
+      <div class="p-2">
+        <p class="text-xs font-medium text-gray-700 truncate">{{ item.brand or 'Unknown' }}</p>
+        <p class="text-xs text-gray-400 truncate">{{ item.name or '' }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
