@@ -16,7 +16,7 @@ router = APIRouter()
 async def setup_page(request: Request, db: Session = Depends(get_db)):
     if db.query(models.User).count() > 0:
         return RedirectResponse("/login", status_code=302)
-    return templates.TemplateResponse("setup.html", {"request": request})
+    return templates.TemplateResponse(request, "setup.html")
 
 
 @router.post("/setup")
@@ -44,7 +44,7 @@ async def setup_submit(
 async def login_page(request: Request, db: Session = Depends(get_db)):
     if db.query(models.User).count() == 0:
         return RedirectResponse("/setup", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")
 
 
 @router.post("/login")
@@ -61,7 +61,7 @@ async def login_submit(
     ).first()
     if not user or not _verify_pw(password, user.hashed_password):
         return templates.TemplateResponse(
-            "login.html", {"request": request, "error": "Invalid username or password"}, status_code=401
+            request, "login.html", {"error": "Invalid username or password"}, status_code=401
         )
     days = 30 if remember else 1
     session_id = uuid.uuid4().hex

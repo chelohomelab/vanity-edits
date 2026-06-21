@@ -67,8 +67,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         .limit(6)
         .all()
     )
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "index.html", {
         "user": request.state.user,
         "counts": counts,
         "total": total,
@@ -88,7 +87,6 @@ async def inventory_page(category: str, request: Request, db: Session = Depends(
         .all()
     )
     ctx = {
-        "request": request,
         "user": request.state.user,
         "items": items,
         "category": category,
@@ -100,7 +98,7 @@ async def inventory_page(category: str, request: Request, db: Session = Depends(
         "polish_finishes": POLISH_FINISHES,
         "color_families": COLOR_FAMILIES,
     }
-    return templates.TemplateResponse("inventory.html", ctx)
+    return templates.TemplateResponse(request, "inventory.html", ctx)
 
 
 @router.get("/item/{item_id}", response_class=HTMLResponse)
@@ -109,8 +107,7 @@ async def item_detail_page(item_id: int, request: Request, db: Session = Depends
     if not item:
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/", status_code=302)
-    return templates.TemplateResponse("item_detail.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "item_detail.html", {
         "user": request.state.user,
         "item": item,
         "makeup_types": MAKEUP_TYPES,
@@ -129,8 +126,7 @@ async def admin_users_page(request: Request, db: Session = Depends(get_db)):
         from fastapi import HTTPException
         raise HTTPException(403, "Admin required")
     users = db.query(models.User).order_by(models.User.id).all()
-    return templates.TemplateResponse("admin_users.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "admin_users.html", {
         "user": request.state.user,
         "users": users,
     })
@@ -141,7 +137,6 @@ async def trash_page(request: Request, db: Session = Depends(get_db)):
     if not getattr(request.state, "user", None) or not request.state.user.is_admin:
         from fastapi import HTTPException
         raise HTTPException(403, "Admin required")
-    return templates.TemplateResponse("admin_trash.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "admin_trash.html", {
         "user": request.state.user,
     })
