@@ -40,10 +40,11 @@ Visit **http://localhost:8000** — you'll be sent to `/setup` on first run to c
 
 A Debian or Ubuntu LXC container in Proxmox (unprivileged is fine) with SSH access.
 
-Before running the setup script, do a full system update:
+Before running the setup script, update and install git:
 
 ```bash
 apt-get update && apt-get upgrade -y
+apt-get install -y git
 ```
 
 ### Install
@@ -139,9 +140,10 @@ The script will stop the service, restore the database and photos, and restart t
 If the LXC container is lost and you need to rebuild from scratch:
 
 1. Create a new Debian/Ubuntu LXC container in Proxmox
-2. Update the system:
+2. Update the system and install git:
    ```bash
    apt-get update && apt-get upgrade -y
+   apt-get install -y git
    ```
 3. Clone and install:
    ```bash
