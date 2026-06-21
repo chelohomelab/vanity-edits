@@ -1,6 +1,9 @@
 # Database
 data/
 
+# Backups
+backups/
+
 # User uploads (photos)
 static/uploads/
 
