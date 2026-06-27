@@ -251,19 +251,30 @@ function renderGallery() {
   }
 
   strip.innerHTML = photos.map((p, idx) => `
-    <div class="relative flex-shrink-0 group/thumb">
-      <img src="/${p.path}" onclick="currentIdx=${idx}; renderGallery()"
-        class="w-14 h-14 rounded-lg object-cover border-2 cursor-pointer transition ${idx === currentIdx ? 'border-vanity-500' : 'border-gray-200 hover:border-vanity-300'}"/>
+    <div class="relative flex-shrink-0" id="thumb-${p.id}">
+      <img src="/${p.path}" onclick="thumbTap(${idx}, ${p.id})"
+        class="w-14 h-14 rounded-lg object-cover border-2 cursor-pointer transition ${idx === currentIdx ? 'border-vanity-500' : 'border-gray-200'}"/>
       ${p.is_primary ? '<span class="absolute -top-1 -left-1 text-xs bg-vanity-500 text-white rounded-full w-4 h-4 flex items-center justify-center shadow">&#9733;</span>' : ''}
-      <div class="absolute -top-1 -right-1 hidden group-hover/thumb:flex gap-0.5">
-        ${!p.is_primary ? `<button onclick="event.stopPropagation(); setPrimary(${p.id})" class="bg-vanity-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow hover:bg-vanity-600" title="Set as primary">&#9733;</button>` : ''}
-        <button onclick="event.stopPropagation(); deletePhoto(${p.id})" class="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow hover:bg-red-600" title="Delete">&times;</button>
+      <div class="absolute -top-1 -right-1 flex gap-0.5 hidden" id="thumb-btns-${p.id}">
+        ${!p.is_primary ? `<button onclick="event.stopPropagation(); setPrimary(${p.id})" class="bg-vanity-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow active:bg-vanity-700" title="Set as primary">&#9733;</button>` : ''}
+        <button onclick="event.stopPropagation(); deletePhoto(${p.id})" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow active:bg-red-700" title="Delete">&times;</button>
       </div>
     </div>
   `).join('');
 }
 
+let activeThumbBtns = null;
+
+function thumbTap(idx, photoId) {
+  currentIdx = idx;
+  renderGallery();
+  const btns = document.getElementById(`thumb-btns-${photoId}`);
+  if (activeThumbBtns && activeThumbBtns !== btns) activeThumbBtns.classList.add('hidden');
+  if (btns) { btns.classList.toggle('hidden'); activeThumbBtns = btns.classList.contains('hidden') ? null : btns; }
+}
+
 function navPhoto(dir) {
+  if (activeThumbBtns) { activeThumbBtns.classList.add('hidden'); activeThumbBtns = null; }
   currentIdx = (currentIdx + dir + photos.length) % photos.length;
   renderGallery();
 }
