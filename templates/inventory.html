@@ -118,19 +118,26 @@
       <!-- Photo -->
       <div>
         <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Photo</label>
-        <div class="flex gap-2">
+        <!-- Pick buttons (hidden once a photo is selected) -->
+        <div id="add-photo-pick" class="flex gap-2">
           <label class="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-4 cursor-pointer hover:border-vanity-300 transition">
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
-            <span class="text-sm text-gray-400">Choose Photo</span>
+            <span class="text-sm text-gray-400">Gallery</span>
             <input type="file" name="image" accept="image/*" class="hidden" onchange="previewImage(this)"/>
           </label>
-          <label class="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-xl px-4 cursor-pointer hover:border-vanity-300 transition">
+          <label class="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl px-4 cursor-pointer hover:border-vanity-300 transition">
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+            <span class="text-sm text-gray-400">Camera</span>
             <input type="file" name="image" accept="image/*" capture="environment" class="hidden" onchange="previewImage(this)"/>
           </label>
         </div>
-        <div id="image-preview" class="mt-2 hidden">
-          <img id="preview-img" class="w-20 h-20 object-cover rounded-xl"/>
+        <!-- Preview (shown after photo selected) -->
+        <div id="add-photo-preview" class="hidden">
+          <div class="relative inline-block">
+            <img id="preview-img" class="w-full max-h-48 object-cover rounded-xl"/>
+            <button type="button" onclick="removePreview()"
+              class="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow active:bg-red-700">&times;</button>
+          </div>
         </div>
       </div>
 
@@ -282,13 +289,21 @@ function previewImage(input) {
     const reader = new FileReader();
     reader.onload = e => {
       document.getElementById('preview-img').src = e.target.result;
-      document.getElementById('image-preview').classList.remove('hidden');
+      document.getElementById('add-photo-pick').classList.add('hidden');
+      document.getElementById('add-photo-preview').classList.remove('hidden');
     };
     reader.readAsDataURL(input.files[0]);
     const form = document.getElementById('add-form');
     const inputs = form.querySelectorAll('input[name="image"]');
     inputs.forEach(inp => { if (inp !== input) inp.value = ''; });
   }
+}
+
+function removePreview() {
+  const form = document.getElementById('add-form');
+  form.querySelectorAll('input[name="image"]').forEach(inp => inp.value = '');
+  document.getElementById('add-photo-pick').classList.remove('hidden');
+  document.getElementById('add-photo-preview').classList.add('hidden');
 }
 
 let activeStatus = 'all';
