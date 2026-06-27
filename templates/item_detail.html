@@ -23,7 +23,7 @@
   <div class="bg-gray-100">
     <!-- Main viewport -->
     <div id="photo-viewport" class="w-full aspect-[4/3] bg-vanity-50 flex items-center justify-center overflow-hidden relative cursor-pointer"
-         onclick="togglePhotoPanel()">
+         onclick="openLightbox()">
       {% set first_photo = photos_json[0] if photos_json else none %}
       {% if first_photo %}
       <img id="main-photo" src="/{{ first_photo.path }}" class="w-full h-full object-cover"/>
@@ -33,7 +33,7 @@
         <p class="text-sm">Tap to add photos</p>
       </div>
       {% endif %}
-      <!-- Swipe arrows (shown when >1 photo) -->
+      <!-- Swipe arrows -->
       <button id="nav-prev" onclick="event.stopPropagation(); navPhoto(-1)" class="hidden absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-black/30 backdrop-blur rounded-full text-white hover:bg-black/50 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
@@ -41,33 +41,45 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
       <!-- Photo counter -->
-      <span id="photo-counter" class="hidden absolute bottom-2 right-2 bg-black/40 backdrop-blur text-white text-xs px-2 py-0.5 rounded-full"></span>
+      <span id="photo-counter" class="hidden absolute bottom-2 left-2 bg-black/40 backdrop-blur text-white text-xs px-2 py-0.5 rounded-full"></span>
+      <!-- Add photo button (bottom-right) -->
+      <button onclick="event.stopPropagation(); openUploadMenu()" class="absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition active:scale-95"
+        style="background: linear-gradient(135deg, #e05a7e, #ab2a50);">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      </button>
     </div>
 
     <!-- Thumbnail strip -->
     <div id="thumb-strip" class="flex gap-1.5 p-2 overflow-x-auto"></div>
 
-    <!-- Upload panel (hidden by default) -->
-    <div id="photo-panel" class="hidden bg-white border-t border-gray-200 p-3 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-medium text-vanity-700 uppercase tracking-wider">Add Photos</span>
-        <button onclick="togglePhotoPanel()" class="text-gray-400 hover:text-gray-600 p-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="flex gap-2">
-        <label class="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-3 cursor-pointer hover:border-vanity-300 transition">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
-          <span class="text-sm text-gray-400">Gallery</span>
-          <input type="file" accept="image/*" multiple class="hidden" onchange="uploadPhotos(this.files)"/>
-        </label>
-        <label class="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl px-4 cursor-pointer hover:border-vanity-300 transition">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
-          <span class="text-sm text-gray-400">Camera</span>
-          <input type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhotos(this.files)"/>
-        </label>
-      </div>
+    <!-- Upload menu (hidden, pops up from the + button) -->
+    <div id="upload-menu" class="hidden bg-white border-t border-gray-200 p-2 flex gap-2">
+      <label class="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-2.5 cursor-pointer hover:border-vanity-300 transition">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+        <span class="text-sm text-gray-400">Gallery</span>
+        <input type="file" accept="image/*" multiple class="hidden" onchange="uploadPhotos(this.files); this.value='';"/>
+      </label>
+      <label class="flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl px-4 cursor-pointer hover:border-vanity-300 transition">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+        <span class="text-sm text-gray-400">Camera</span>
+        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="uploadPhotos(this.files); this.value='';"/>
+      </label>
     </div>
+  </div>
+
+  <!-- Fullscreen lightbox -->
+  <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onclick="closeLightbox()">
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white/70 hover:text-white p-2 z-10">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <button id="lb-prev" onclick="event.stopPropagation(); lbNav(-1)" class="hidden absolute left-3 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button id="lb-next" onclick="event.stopPropagation(); lbNav(1)" class="hidden absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <img id="lb-img" onclick="event.stopPropagation()" class="max-w-full max-h-full object-contain"/>
+    <span id="lb-counter" class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm"></span>
   </div>
 
   <!-- Details -->
@@ -287,11 +299,56 @@ document.getElementById('photo-viewport').addEventListener('touchend', e => {
   if (Math.abs(dx) > 50 && photos.length > 1) { navPhoto(dx < 0 ? 1 : -1); e.preventDefault(); }
 }, {passive:false});
 
-function togglePhotoPanel() {
-  document.getElementById('photo-panel').classList.toggle('hidden');
+function openLightbox() {
+  if (photos.length === 0) { openUploadMenu(); return; }
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  renderLightbox();
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function renderLightbox() {
+  const img = document.getElementById('lb-img');
+  img.src = '/' + photos[currentIdx].path;
+  const counter = document.getElementById('lb-counter');
+  counter.textContent = photos.length > 1 ? `${currentIdx + 1} / ${photos.length}` : '';
+  document.getElementById('lb-prev').classList.toggle('hidden', photos.length <= 1);
+  document.getElementById('lb-next').classList.toggle('hidden', photos.length <= 1);
+}
+
+function lbNav(dir) {
+  currentIdx = (currentIdx + dir + photos.length) % photos.length;
+  renderLightbox();
+  renderGallery();
+}
+
+// Lightbox swipe
+let lbTouchX = 0;
+document.getElementById('lightbox').addEventListener('touchstart', e => { lbTouchX = e.touches[0].clientX; }, {passive:true});
+document.getElementById('lightbox').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - lbTouchX;
+  if (Math.abs(dx) > 50 && photos.length > 1) { lbNav(dx < 0 ? 1 : -1); e.preventDefault(); }
+}, {passive:false});
+
+// Lightbox keyboard
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox').classList.contains('hidden')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lbNav(-1);
+  if (e.key === 'ArrowRight') lbNav(1);
+});
+
+function openUploadMenu() {
+  document.getElementById('upload-menu').classList.toggle('hidden');
 }
 
 async function uploadPhotos(fileList) {
+  document.getElementById('upload-menu').classList.add('hidden');
   for (const file of fileList) {
     const fd = new FormData();
     fd.append('image', file);
