@@ -6,7 +6,7 @@ from sqlalchemy import distinct
 from sqlalchemy.orm import Session
 
 import database as models
-from dependencies import get_db, save_uploaded_file
+from dependencies import get_db, save_uploaded_file, delete_uploaded_file
 from schemas import ItemPatchPayload
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -31,6 +31,18 @@ def autocomplete(
     return sorted(v for (v,) in q.all() if v)
 
 
+def _photo_list(item: models.Item) -> list:
+    return [{"id": p.id, "path": p.path, "is_primary": p.is_primary, "position": p.position}
+            for p in sorted(item.photos, key=lambda p: (not p.is_primary, p.position))]
+
+
+def _primary_photo(item: models.Item) -> Optional[str]:
+    for p in item.photos:
+        if p.is_primary:
+            return p.path
+    return item.photos[0].path if item.photos else None
+
+
 def _item_dict(i: models.Item) -> dict:
     return {
         "id": i.id,
@@ -41,8 +53,6 @@ def _item_dict(i: models.Item) -> dict:
         "quantity": i.quantity,
         "price_paid": i.price_paid,
         "upc": i.upc,
-        "image_path_1": i.image_path_1,
-        "image_path_2": i.image_path_2,
         "notes": i.notes,
         "date_added": i.date_added,
         "is_deleted": i.is_deleted,
@@ -54,6 +64,8 @@ def _item_dict(i: models.Item) -> dict:
         "scent_type": i.scent_type,
         "color_family": i.color_family,
         "polish_type": i.polish_type,
+        "photos": _photo_list(i),
+        "primary_photo": _primary_photo(i),
     }
 
 
@@ -106,7 +118,6 @@ async def add_item(
         upc=upc or None,
         notes=notes or None,
         date_added=datetime.utcnow().strftime("%Y-%m-%d"),
-        image_path_1=img_path,
         product_type=product_type or None,
         shade=shade or None,
         finish=finish or None,
@@ -117,6 +128,9 @@ async def add_item(
         polish_type=polish_type or None,
     )
     db.add(item)
+    db.flush()
+    if img_path:
+        db.add(models.ItemPhoto(item_id=item.id, path=img_path, position=0, is_primary=True))
     db.commit()
     db.refresh(item)
     return _item_dict(item)
@@ -142,10 +156,17 @@ def patch_item(item_id: int, payload: ItemPatchPayload, db: Session = Depends(ge
     return _item_dict(i)
 
 
-@router.post("/{item_id}/update-photo/")
-async def update_photo(
+@router.get("/{item_id}/photos/")
+def get_photos(item_id: int, db: Session = Depends(get_db)):
+    i = db.query(models.Item).filter(models.Item.id == item_id).first()
+    if not i:
+        raise HTTPException(404, "Not found")
+    return _photo_list(i)
+
+
+@router.post("/{item_id}/photos/")
+async def add_photo(
     item_id: int,
-    slot: int = Form(default=1),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -153,22 +174,54 @@ async def update_photo(
     if not i:
         raise HTTPException(404, "Not found")
     path = await save_uploaded_file(image, i.category)
-    if slot == 2:
-        i.image_path_2 = path
-    else:
-        i.image_path_1 = path
+    if not path:
+        raise HTTPException(400, "No image provided")
+    max_pos = max((p.position for p in i.photos), default=-1)
+    is_first = len(i.photos) == 0
+    photo = models.ItemPhoto(item_id=item_id, path=path, position=max_pos + 1, is_primary=is_first)
+    db.add(photo)
     db.commit()
-    return {"image_path_1": i.image_path_1, "image_path_2": i.image_path_2}
+    db.refresh(i)
+    return _photo_list(i)
 
 
-@router.post("/{item_id}/swap-photos/")
-def swap_photos(item_id: int, db: Session = Depends(get_db)):
-    i = db.query(models.Item).filter(models.Item.id == item_id).first()
-    if not i:
-        raise HTTPException(404, "Not found")
-    i.image_path_1, i.image_path_2 = i.image_path_2, i.image_path_1
+@router.delete("/{item_id}/photos/{photo_id}")
+def delete_photo(item_id: int, photo_id: int, db: Session = Depends(get_db)):
+    photo = db.query(models.ItemPhoto).filter(
+        models.ItemPhoto.id == photo_id, models.ItemPhoto.item_id == item_id
+    ).first()
+    if not photo:
+        raise HTTPException(404, "Photo not found")
+    was_primary = photo.is_primary
+    delete_uploaded_file(photo.path)
+    db.delete(photo)
+    db.flush()
+    if was_primary:
+        remaining = db.query(models.ItemPhoto).filter(
+            models.ItemPhoto.item_id == item_id
+        ).order_by(models.ItemPhoto.position).first()
+        if remaining:
+            remaining.is_primary = True
     db.commit()
-    return {"image_path_1": i.image_path_1, "image_path_2": i.image_path_2}
+    item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    return _photo_list(item)
+
+
+@router.post("/{item_id}/photos/{photo_id}/set-primary/")
+def set_primary_photo(item_id: int, photo_id: int, db: Session = Depends(get_db)):
+    photos = db.query(models.ItemPhoto).filter(models.ItemPhoto.item_id == item_id).all()
+    found = False
+    for p in photos:
+        if p.id == photo_id:
+            p.is_primary = True
+            found = True
+        else:
+            p.is_primary = False
+    if not found:
+        raise HTTPException(404, "Photo not found")
+    db.commit()
+    item = db.query(models.Item).filter(models.Item.id == item_id).first()
+    return _photo_list(item)
 
 
 @router.post("/{item_id}/status/")

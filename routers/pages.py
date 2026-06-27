@@ -107,9 +107,14 @@ async def item_detail_page(item_id: int, request: Request, db: Session = Depends
     if not item:
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/", status_code=302)
+    photos_json = [
+        {"id": p.id, "path": p.path, "is_primary": p.is_primary, "position": p.position}
+        for p in sorted(item.photos, key=lambda p: (not p.is_primary, p.position))
+    ]
     return templates.TemplateResponse(request, "item_detail.html", {
         "user": request.state.user,
         "item": item,
+        "photos_json": photos_json,
         "makeup_types": MAKEUP_TYPES,
         "makeup_finishes": MAKEUP_FINISHES,
         "perfume_concentrations": PERFUME_CONCENTRATIONS,

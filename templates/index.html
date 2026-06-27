@@ -46,8 +46,10 @@
     {% for item in recent %}
     <a href="/item/{{ item.id }}" class="glass rounded-xl overflow-hidden card-hover border border-white/60 block">
       <div class="aspect-square bg-vanity-50 flex items-center justify-center overflow-hidden">
-        {% if item.image_path_1 %}
-        <img src="/{{ item.image_path_1 }}" alt="{{ item.brand }}" class="w-full h-full object-cover"/>
+        {% set primary = item.photos|selectattr('is_primary')|first if item.photos else none %}
+        {% set cover = primary.path if primary else (item.photos[0].path if item.photos else none) %}
+        {% if cover %}
+        <img src="/{{ cover }}" alt="{{ item.brand }}" class="w-full h-full object-cover"/>
         {% else %}
         <span class="text-vanity-200 text-3xl">
           {% if item.category == 'makeup' %}

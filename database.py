@@ -46,6 +46,21 @@ class Item(Base):
     color_family = Column(String)                    # red, pink, nude, purple, blue...
     polish_type = Column(String)                     # regular, gel, dip, top coat, base coat
 
+    photos = relationship("ItemPhoto", back_populates="item", cascade="all, delete-orphan",
+                          order_by="ItemPhoto.position")
+
+
+class ItemPhoto(Base):
+    __tablename__ = "item_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(Integer, ForeignKey("items.id"), nullable=False)
+    path = Column(String, nullable=False)
+    position = Column(Integer, default=0)
+    is_primary = Column(Boolean, default=False)
+
+    item = relationship("Item", back_populates="photos")
+
 
 class UpcCache(Base):
     __tablename__ = "upc_cache"
@@ -99,3 +114,19 @@ def _col_exists(db: Session, table: str, column: str) -> bool:
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+    with Session(engine) as db:
+        migrated = db.query(Item).filter(
+            (Item.image_path_1.isnot(None)) | (Item.image_path_2.isnot(None))
+        ).all()
+        for item in migrated:
+            existing = db.query(ItemPhoto).filter(ItemPhoto.item_id == item.id).count()
+            if existing:
+                continue
+            pos = 0
+            if item.image_path_1:
+                db.add(ItemPhoto(item_id=item.id, path=item.image_path_1, position=pos, is_primary=True))
+                pos += 1
+            if item.image_path_2:
+                db.add(ItemPhoto(item_id=item.id, path=item.image_path_2, position=pos, is_primary=False))
+        db.commit()
